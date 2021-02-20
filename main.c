@@ -30,46 +30,59 @@ pthread_mutex_t mutex1, mutex2, mutex3 = PTHREAD_MUTEX_INITIALIZER;
 //Condition variable for each buffer
 pthread_cond_t full1, full2, full3 = PTHREAD_COND_INITIALIZER;
 
-
-void * getUserInput() {
-   printf("Enter: ");
-   fflush(stdout);
-   scanf("%79s", &input);
-
-   /* while(scanf("%79s", &input) != EOF) {
-    * }
-    * */
-
-}
+int stop = 0;
 
 void put_buff(char * userInput) {
    pthread_mutex_lock(&mutex1);
 
+   strcpy(buff1[ProdIdx1], userInput);
+   
+   ProdIdx1++;
+
+   ctr1++;
+
+   pthread_cond_signal(&full1);
+
+   pthread_mutex_unlock(&mutex1);
+}
+
+char * get_buff_1() {
+   pthread_mutex_lock(&mutex1);
+   while(ctr1 == 0) {
+      pthread_cond_wait(&full1, &mutex1);
+   }
+   size_t length = 0;
+   char * input =(char*) calloc(SIZE, sizeof(char));
+   strcpy(input, buff1[ProdIdx1]);
+   ConIdx1++;
+   ctr1--;
+   pthread_mutex_unlock;
+
+}
+
+void * lineSeparate() {
 
 
 }
 
+void * getUserInput() {
+    size_t length = 0;
+    char * input = (char*) calloc(SIZE, sizeof(char));
+
+    while(stop != 1) {
+       getline(&input, &length, stdin);
+
+       if(strncmp(input, "STOP\n", 5) == 0) {
+	  stop = 1;
+	  return NULL;
+       }else {
+	  put_buff(input);
+       }
+    }
+
+}
+
 int main(int argc, char * argv[]) {
-   if(argc > 1) {
-      for(int i = 0; i < argc; i++) {
-	 if(strcmp(argv[i], "<") == 0) {
-
-
-	 }else if(strcmp(argv[i], ">") == 0) {
-	    FILE * fPtr1;
-	    fPtr1 = fopen(argv[i+1], "w");
-	    if(fPtr1 == NULL) {
-	       return 1;
-	    }
-	    int num;
-	    num = fileno(fPtr1);
-	    dup2(num, STDOUT_FILENO);
-	    dup2(num, STDERR_FILENO);
-	    fclose(fPtr1);
-	 }
-      }
-   }
-   
    pthread_t input_t, separate_t, plus_t, output_t;
    pthread_create(&input_t, NULL, getUserInput, NULL);
 
