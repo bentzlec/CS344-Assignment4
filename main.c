@@ -9,11 +9,9 @@
 #define NUM_LINES 50
 
 //Buffers for Producer-Consumer Pipeline
-char buff1[NUM_LINES][SIZE] = {{0}};
-char buff2[NUM_LINES][SIZE] = {{0}};
-char buff3[NUM_LINES][SIZE] = {{0}};
-
-char input[80];
+char *buff1[NUM_LINES];
+char *buff2[NUM_LINES];
+char *buff3[NUM_LINES];
 
 //Number of items in each buffer
 int ctr1, ctr2, ctr3 = 0;
@@ -35,6 +33,9 @@ int stop = 0;
 void put_buff(char * userInput) {
    pthread_mutex_lock(&mutex1);
 
+   if(buff1[ProdIdx1] == NULL) {
+      buff1[ProdIdx1] = (char*) malloc(SIZE * sizeof(char));
+   }
    strcpy(buff1[ProdIdx1], userInput);
    
    ProdIdx1++;
@@ -52,29 +53,33 @@ char * get_buff_1() {
       pthread_cond_wait(&full1, &mutex1);
    }
    size_t length = 0;
-   char * input =(char*) calloc(SIZE, sizeof(char));
-   strcpy(input, buff1[ProdIdx1]);
+   char * input = strdup(buff1[ConIdx1]);
    ConIdx1++;
    ctr1--;
-   pthread_mutex_unlock;
+   pthread_mutex_unlock(&mutex1);
 
+   return input;
 }
 
 void * lineSeparate() {
-
-
+   char * input = get_buff_1();
+   for(int i = 0; i < (strlen(input) - 1); i++) {
+      if(input[i] == '\n') {
+	 input[i] == ' ';
+      }
+   }
+   printf("%s", input);
 }
 
 void * getUserInput() {
-    size_t length = 0;
-    char * input = (char*) calloc(SIZE, sizeof(char));
+    size_t length;
+    char * input = (char*) malloc(SIZE * sizeof(char));
 
     while(stop != 1) {
-       getline(&input, &length, stdin);
+       getline(&input, &length, stdin); //Change to fgets
 
        if(strncmp(input, "STOP\n", 5) == 0) {
 	  stop = 1;
-	  return NULL;
        }else {
 	  put_buff(input);
        }
@@ -86,7 +91,7 @@ int main(int argc, char * argv[]) {
    pthread_t input_t, separate_t, plus_t, output_t;
    pthread_create(&input_t, NULL, getUserInput, NULL);
 
-   pthread_join(input_t, NULL);
-
+   //pthread_join(input_t, NULL);
+   lineSeparate();
    return 0;
 }
