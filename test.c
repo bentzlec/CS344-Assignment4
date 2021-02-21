@@ -31,29 +31,47 @@ pthread_mutex_t mutex1, mutex2, mutex3 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t full1, full2, full3 = PTHREAD_COND_INITIALIZER;
 
 int stop = 0;
+/*
+void put_buff(char * userInput) {
+   pthread_mutex_lock(&mutex1);
+
+   if(buff1[line] == NULL) {
+      buff1[line] = (char*) malloc(SIZE * sizeof(char));
+      Idx1 = Idx1 + (strlen(userInput) - 1);
+      line++;
+   }
+
+   strcpy(buff1[ProdIdx1], userInput);
+   
+   ProdIdx1++;
+
+   ctr1++;
+
+   pthread_cond_signal(&full1);
+
+   pthread_mutex_unlock(&mutex1);
+}*/
 
 int main() {
-   size_t length;
+   /*size_t length;
    char * input = (char*) calloc(SIZE, sizeof(char));
    while(stop != 1) {
       getline(&input, &length, stdin);
       if(strncmp(input, "STOP\n", 5) == 0) {
 	 stop = 1;
-	 //return 0;
       }else {
-	 //put_buff(input);
+	 put_buff(input);
       }
-   }
+   }*/
 
-   for(int i = 0; i < 
+   char * input;
+   size_t length;
 
+   getline(&input, &length, stdin);
+   int len = strlen(input);
+   printf("String length: %i\n", len);
 
    
-   
-   
-   
-   
-   
-   
+    
    return 0;
 }

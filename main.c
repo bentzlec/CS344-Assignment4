@@ -16,6 +16,10 @@ char *buff3[NUM_LINES];
 //Number of items in each buffer
 int ctr1, ctr2, ctr3 = 0;
 
+int charNum = 0;
+
+int line = 0;
+
 //Producer indexes
 int ProdIdx1, ProdIdx2, ProdIdx3 = 0;
 
@@ -32,12 +36,16 @@ int stop = 0;
 
 void put_buff(char * userInput) {
    pthread_mutex_lock(&mutex1);
-
-   if(buff1[ProdIdx1] == NULL) {
-      buff1[ProdIdx1] = (char*) malloc(SIZE * sizeof(char));
-   }
-   strcpy(buff1[ProdIdx1], userInput);
+   //printf("userInput: %s", userInput); 
    
+   buff1[line] = malloc(strlen(userInput) + 1);
+   strcpy(buff1[line], userInput);
+   //printf("Buffer1 after strcpy: %s", buff1[line]);
+   charNum = charNum + (strlen(userInput - 1));
+
+   line++;
+   printf("Lines counter in putt_buff: %i\n", line);
+ 
    ProdIdx1++;
 
    ctr1++;
@@ -53,27 +61,28 @@ char * get_buff_1() {
       pthread_cond_wait(&full1, &mutex1);
    }
    size_t length = 0;
-   char * input = strdup(buff1[ConIdx1]);
+   char * input = malloc(strlen(buff1[ConIdx1]) + 1);
+   strcpy(input, buff1[ConIdx1]);
    ConIdx1++;
    ctr1--;
    pthread_mutex_unlock(&mutex1);
 
+   //printf("Before return: %s", input);
+   printf("Lines: %i\n", line);
    return input;
 }
 
 void * lineSeparate() {
-   char * input = get_buff_1();
-   for(int i = 0; i < (strlen(input) - 1); i++) {
-      if(input[i] == '\n') {
-	 input[i] == ' ';
-      }
-   }
-   printf("%s", input);
+   char * input;
+   
+   printf("Lines2: %i\n", line);
+   get_buff_1();
+   
 }
 
 void * getUserInput() {
-    size_t length;
-    char * input = (char*) malloc(SIZE * sizeof(char));
+    size_t length = 0;
+    char * input = NULL;
 
     while(stop != 1) {
        getline(&input, &length, stdin); //Change to fgets
@@ -90,8 +99,9 @@ void * getUserInput() {
 int main(int argc, char * argv[]) {
    pthread_t input_t, separate_t, plus_t, output_t;
    pthread_create(&input_t, NULL, getUserInput, NULL);
+   pthread_create(&separate_t, NULL, lineSeparate, NULL);
 
-   //pthread_join(input_t, NULL);
-   lineSeparate();
+   pthread_join(input_t, NULL);
+   pthread_join(separate_t, NULL);
    return 0;
 }
