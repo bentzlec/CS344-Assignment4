@@ -9,9 +9,9 @@
 #define NUM_LINES 50
 
 //Buffers for Producer-Consumer Pipeline
-char *buff1[NUM_LINES];
-char *buff2[NUM_LINES];
-char *buff3[NUM_LINES];
+char buff1[NUM_LINES][SIZE];
+char buff2[NUM_LINES][SIZE];
+char buff3[NUM_LINES][SIZE];
 
 //Number of items in each buffer
 int ctr1, ctr2, ctr3 = 0;
@@ -35,24 +35,20 @@ pthread_cond_t full1, full2, full3 = PTHREAD_COND_INITIALIZER;
 int stop = 0;
 
 void put_buff(char * userInput) {
-   pthread_mutex_lock(&mutex1);
-   //printf("userInput: %s", userInput); 
+   //pthread_mutex_lock(&mutex1);
    
-   buff1[line] = malloc(strlen(userInput) + 1);
    strcpy(buff1[line], userInput);
    //printf("Buffer1 after strcpy: %s", buff1[line]);
-   charNum = charNum + (strlen(userInput - 1));
-
+  
    line++;
-   printf("Lines counter in putt_buff: %i\n", line);
- 
+  
    ProdIdx1++;
 
    ctr1++;
 
-   pthread_cond_signal(&full1);
 
-   pthread_mutex_unlock(&mutex1);
+   //pthread_cond_signal(&full1);
+   //pthread_mutex_unlock(&mutex1);
 }
 
 char * get_buff_1() {
@@ -68,7 +64,7 @@ char * get_buff_1() {
    pthread_mutex_unlock(&mutex1);
 
    //printf("Before return: %s", input);
-   printf("Lines: %i\n", line);
+   
    return input;
 }
 
@@ -96,12 +92,18 @@ void * getUserInput() {
 
 }
 
+void print_buff1() {
+   for(int i = 0; i < line; i++) {
+      printf("Buffer1[%i]: %s", i, buff1[i]);
+   }
+}
+
 int main(int argc, char * argv[]) {
    pthread_t input_t, separate_t, plus_t, output_t;
    pthread_create(&input_t, NULL, getUserInput, NULL);
-   pthread_create(&separate_t, NULL, lineSeparate, NULL);
+   //pthread_create(&separate_t, NULL, lineSeparate, NULL);
 
-   pthread_join(input_t, NULL);
-   pthread_join(separate_t, NULL);
+   //pthread_join(input_t, NULL);
+   //pthread_join(separate_t, NULL);
    return 0;
 }
