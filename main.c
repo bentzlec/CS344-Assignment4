@@ -27,7 +27,9 @@ pthread_cond_t full_1, full_2, full_3 = PTHREAD_COND_INITIALIZER;
  ***************************/
 char * get_buff3() {                                 
    char * line = malloc(strlen(buff3[con_idx3]) + 1); //Allocate line to hold what we grab from the buffer
+   
    strcpy(line, buff2[con_idx3]); 
+   
    con_idx3++; //Iterate consumer index
    
    return line;
@@ -61,6 +63,7 @@ void * printBuff() {  //This is heavily based on Michael Slater's Pseudocode on 
       printf("%s\n", output);
       fflush(stdout);
    }
+   
    last_line = curr_line_count;
 }
 /**************************
@@ -71,27 +74,32 @@ void * printBuff() {  //This is heavily based on Michael Slater's Pseudocode on 
  /*************************
  ***** THREAD 3 START *****
  *************************/
-char * get_buff2() {
+char * get_buff2() { //Same get_buff function as above in thread 4
    char * line = malloc(strlen(buff2[con_idx2]) + 1);
+   
    strcpy(line, buff2[con_idx2]);
+   
    con_idx2++;
    
    return line;
 }
 
-void put_buff3(char * userInput) {
-   strcpy(buff3[line3], userInput);
+void put_buff3(char * userInput) { //Copy the the line into the buffer and increment counter
+   strcpy(buff3[line3], userInput); 
+   
    line3++;
 }
 
-void convertPlus(char * userInput) {
-   char * buffer = strdup(userInput);
+void convertPlus(char * userInput) { //I adapted a function from my smallsh assignment. It worked there but has weird behavior here
+   char * buffer = strdup(userInput); //For example: ++rust++ turns into ^rust(weird character) if you print buffer 3
+   
    for(int i = 0; i < strlen(userInput); i++) {
       if((buffer[i] == '+') && (i+1 < strlen(buffer)) && (buffer[i+1] == '+')) {
 	 buffer[i] = '%';
 	 buffer[i+1] = 'c';
       }
    }
+   
    sprintf(userInput, buffer, '^');
 }
 
@@ -100,15 +108,19 @@ void * changePlus() {
    char * temp = NULL;
 
    pthread_mutex_lock(&mutex_3);
-   while(line2 == 0) {
+   
+   while(line2 == 0) { //If there's nothing in the buffer, wait
       pthread_cond_wait(&full_2, &mutex_2);
    }
+   
    for(int i = 0; i < line2; i++) {
       line = get_buff2();
       convertPlus(line);
       put_buff3(line);
    }
-   pthread_cond_signal(&full_3);
+   
+   pthread_cond_signal(&full_3); //Signal buffer is full
+   
    pthread_mutex_unlock(&mutex_3);
 }
 /**************************
@@ -120,29 +132,36 @@ void * changePlus() {
 /****************************
  ******* THREAD 2 START *****
  ***************************/
-char * get_buff1() {
+char * get_buff1() { //Same as function in thread 4
    char * line = malloc(strlen(buff1[con_idx1]) + 1);
+   
    strcpy(line, buff1[con_idx1]);
+   
    con_idx1++;
 
    return line;
 }
 
-void put_buff2(char * userInput) {
+void put_buff2(char * userInput) { //Same as function in thread 3
    strcpy(buff2[line2], userInput);
+   
    line2++;
 }
 
 void * separateLine() {
    char * line;
-   while(stop != 1) {
+   while(stop != 1) { //While "STOP\n" has not been read
+      
       pthread_mutex_lock(&mutex_2);
+      
       for(int i = 0; i < line1; i++) {
 	 line = get_buff1();
-	 line[strcspn(line, "\n")] = ' ';
+	 line[strcspn(line, "\n")] = ' '; //Replace \n with ' '
 	 put_buff2(line);
       }
+      
       pthread_cond_signal(&full_2);
+      
       pthread_mutex_unlock(&mutex_2);
    }
 }
@@ -155,20 +174,22 @@ void * separateLine() {
 /**************************
  ******THREAD 1 START *****
  *************************/
-void put_buff1(char * userInput) {
+void put_buff1(char * userInput) { 
    strcpy(buff1[line1], userInput);
+   
    line1++;
 }
 
 void* getUserInput() {
-   size_t length = 0;
+   size_t length = 0; //For getline
    char * input = NULL;
 
+   //This is adapted from Michael Slater's post on Piazza: https://piazza.com/class/kjc3320l16c2f1?cid=458
    while(stop != 1) {
       getline(&input, &length, stdin);
 
-      if(strncmp(input, "STOP\n", 5) == 0) {
-	 stop = 1;
+      if(strncmp(input, "STOP\n", 5) == 0) { 
+	 stop = 1; //Set flag if encounter "STOP\n"
       }else {
 	 pthread_mutex_lock(&mutex_1);
 	 
@@ -185,18 +206,19 @@ void* getUserInput() {
 ****************************/
 
 
-
+//Buffer printing functions
 void print_buff1() {
    for(int i = 0; i < line1; i++) {
       printf("Buffer1[%i]: %s", i, buff1[i]);
+      fflush(stdout);
    }
 }
 
 void print_buff2() {
    for(int i = 0; i < line2; i++) {
       printf("Buffer2[%i]: %s", i, buff2[i]);
+      fflush(stdout);
    }
-   //printf("Line 3: %i\n", line3);
 }
 
 void print_buff3() {
@@ -208,6 +230,7 @@ void print_buff3() {
    fflush(stdout);
 }
 
+//I adapted this from the example thread code: https://repl.it/@cs344/65prodconspipelinec
 int main() {
    pthread_t input_t, line_t, plus_t, output_t;
 
@@ -224,8 +247,12 @@ int main() {
 
    //print_buff1();
    //print_buff2();
+
+   /*
    printf("*** BUFFER 3 ***\n");
    fflush(stdout);
    print_buff3();
+   */
+
    return 0;
 }
