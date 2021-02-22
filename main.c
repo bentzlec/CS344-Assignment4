@@ -21,7 +21,49 @@ pthread_mutex_t mutex_1, mutex_2, mutex_3 = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_cond_t full_1, full_2, full_3 = PTHREAD_COND_INITIALIZER;
 
+
 /*************************************************
+ ******* ACTIONS PERFORMED BY THREAD 4 START *****
+ ************************************************/
+char * get_buff3() {
+   char * line = malloc(strlen(buff3[con_idx3]) + 1);
+   strcpy(line, buff2[con_idx3]);
+   con_idx3++;
+   
+   return line;
+}
+
+void * printBuff() {
+   int last_line = 0;
+   char output[81] = {0};
+   char * print_buffer = calloc(SIZE * NUM_LINES, sizeof(char));
+   char * line = NULL;
+   pthread_mutex_lock(&mutex_3);
+   while(line3 == 0) {
+      pthread_cond_wait(&full_3, &mutex_3);
+   }
+   for(int i = 0; i < line3; i++) {
+      line = get_buff3();
+      strcat(print_buffer, line);
+   }
+   pthread_mutex_unlock(&mutex_3);
+
+   int curr_line_count = (strlen(print_buffer) / 80);
+
+   for(int t = 0; t < curr_line_count; t++) {
+      memset(output, 0, 81);
+      strncpy(output, print_buffer + (t * 80), 80);
+      printf("%s\n", output);
+      fflush(stdout);
+   }
+   last_line = curr_line_count;
+}
+/*************************************************
+ ******* ACTIONS PERFORMED BY THREAD 4 END *****
+ ************************************************/
+
+
+ /*************************************************
  ******* ACTIONS PERFORMED BY THREAD 3 START *****
  ************************************************/
 char * get_buff2() {
@@ -48,19 +90,23 @@ void convertPlus(char * userInput) {
    sprintf(userInput, buffer, '^');
 }
 
+
 void * changePlus() {
    char * line = NULL;
- 
-   //while(stop != 1) {
-      pthread_mutex_lock(&mutex_3);
-      for(int i = 0; i < line2; i++) {
-	 line = get_buff2();
-	 convertPlus(line);
-	 put_buff3(line);
-      }
-      pthread_cond_signal(&full_3);
-      pthread_mutex_unlock(&mutex_3);
-   //}
+   char * temp = NULL;
+   printf("Items in buffer 2: %i\n", line2);
+
+   pthread_mutex_lock(&mutex_3);
+   while(line2 == 0) {
+      pthread_cond_wait(&full_2, &mutex_2);
+   }
+   for(int i = 0; i < line2; i++) {
+      line = get_buff2();
+      convertPlus(line);
+      put_buff3(line);
+   }
+   pthread_cond_signal(&full_3);
+   pthread_mutex_unlock(&mutex_3);
 }
 /*************************************************
  ******* ACTIONS PERFORMED BY THREAD 3 END *****
@@ -163,11 +209,13 @@ int main() {
    pthread_create(&input_t, NULL, getUserInput, NULL);
    pthread_create(&line_t, NULL, separateLine, NULL);
    pthread_create(&plus_t, NULL, changePlus, NULL);
-   //changePlus();
+   //pthread_create(&output_t, NULL, printBuff, NULL);
+   
    
    pthread_join(input_t, NULL);
    pthread_join(line_t, NULL);
    pthread_join(plus_t, NULL);
+   //pthread_join(output_t, NULL);
    
    //changePlus();
 

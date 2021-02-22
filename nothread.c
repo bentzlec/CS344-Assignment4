@@ -18,6 +18,44 @@ int con_idx1, con_idx2, con_idx3 = 0;
 int stop = 0;
 
 /*************************************************
+ ******* ACTIONS PERFORMED BY THREAD 4 START *****
+ ************************************************/
+char * get_buff3() {
+   char * line = malloc(strlen(buff3[con_idx3]) + 1);
+   strcpy(line, buff2[con_idx3]);
+   con_idx3++;
+   
+   return line;
+}
+
+
+void * printBuff() {
+   int last_line = 0;
+   char output[81] = {0};
+   char * print_buffer = calloc(SIZE * NUM_LINES, sizeof(char));
+   char * line = NULL;
+
+   for(int i = 0; i < line3; i++) {
+      line = get_buff3();
+      strcat(print_buffer, line);
+   }
+
+   int curr_line_count = (strlen(print_buffer) / 80);
+
+   for(int t = 0; t < curr_line_count; t++) {
+      memset(output, 0, 81);
+      strncpy(output, print_buffer + (t * 80), 80);
+      printf("%s\n", output);
+      fflush(stdout);
+   }
+   last_line = curr_line_count;
+}
+/*************************************************
+ ******* ACTIONS PERFORMED BY THREAD 4 END *****
+ ************************************************/
+
+
+/*************************************************
  ******* ACTIONS PERFORMED BY THREAD 3 START *****
  ************************************************/
 char * get_buff2() {
@@ -143,8 +181,12 @@ int main() {
    separateLine();
    changePlus();
 
-   print_buff2();
    print_buff3();
+   printf("\n\n"); 
+   printBuff();
+   //printf("\n");
+   //print_buff2();
+   //print_buff3();
 
    return 0;
 }
